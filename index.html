@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <title>綠島數位孿生 - 能源情境與權屬分析</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css" />
+    <style>
+        html, body { padding: 0; margin: 0; height: 100%; width: 100%; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; display: flex; }
+        
+        /* 左側固定面板 */
+        #left-panel { width: 320px; height: 100%; background: #f8f9fa; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+        
+        /* 中間地圖區域 */
+        #center-container { flex: 1; position: relative; background-color: #f0f0f0; }
+        #viewDiv { height: 100%; width: 100%; }
+        
+        /* 右側動態面板 */
+        #right-panel { width: 320px; height: 100%; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
+
+        .header { background: #005e95; color: white; padding: 15px; font-weight: bold; text-align: center; font-size: 16px; }
+        .content-padding { padding: 12px; }
+        
+        /* 情境按鈕調整至地圖左下角 */
+        #scenario-bar { position: absolute; bottom: 30px; left: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99; }
+        .scenario-btn { padding: 10px 15px; background: white; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 110px; font-size: 13px; }
+        .scenario-btn.active { background: #005e95; color: white; }
+
+        .chart-box { background: white; border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .chart-title { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; }
+        .chart-container { height: 180px; position: relative; }
+        
+        .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .result-card { background: #fff; border: 1px solid #e0e0e0; padding: 8px; border-radius: 6px; text-align: center; }
+        .result-label { font-size: 11px; color: #666; }
+        .result-value { font-size: 14px; font-weight: bold; color: #d35400; }
+
+        h3 { color: #005e95; border-left: 5px solid #ff9f40; padding-left: 10px; margin: 5px 0; font-size: 16px; }
+        .scenario-text-desc { font-size: 12px; color: #555; background: #f0f7ff; padding: 8px; border-radius: 4px; line-height: 1.4; border-left: 3px solid #005e95; margin-bottom: 10px; }
+        .static-count-box { padding: 10px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 6px; color: #0d47a1; font-weight: bold; font-size: 13px; margin-bottom: 15px; }
+    </style>
+</head>
+
+<body>
+    <div id="left-panel">
+        <div class="header">綠島鄉再生能源情境模擬</div>
+        <div class="content-padding">
+            <div class="static-count-box">
+                綠島鄉建物總數：3340 棟<br>
+                <span style="font-size: 11px; font-weight: normal;">(公有：1014 | 私有：2326)</span>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">情境發電總量對比 (MWh)</div>
+                <div class="chart-container"><canvas id="resBar"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">自給率趨勢 (6大情境)</div>
+                <div class="chart-container"><canvas id="resLine"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">能源組成細節 (kWh)</div>
+                <div class="chart-container"><canvas id="resStack"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="center-container">
+        <div id="viewDiv"></div>
+        <div id="scenario-bar">
+            <button class="scenario-btn active" data-id="90f58d1483704da0b21edb1e127c2b18" data-name="情境一">情境一</button>
+            <button class="scenario-btn" data-id="748b1770860d4e66bcbd785c779cb372" data-name="情境二">情境二</button>
+            <button class="scenario-btn" data-id="2819b3ded37747f696ffbb4e9fe249bc" data-name="情境三">情境三</button>
+            <button class="scenario-btn" data-id="e0da62dcbbf848efb3e17ce71003f00d" data-name="情境四">情境四</button>
+            <button class="scenario-btn" data-id="eb4eae80e7534e99ac4c74bc6993dff5" data-name="情境五">情境五</button>
+            <button class="scenario-btn" data-id="909a0a541d034687ba025513809b0dd9" data-name="情境六">情境六</button>
+        </div>
+    </div>
+
+    <div id="right-panel">
+        <div class="header">情境模擬詳情</div>
+        <div class="content-padding">
+            <h3 id="scenario-display-name">載入中...</h3>
+            <div id="scenario-text-desc" class="scenario-text-desc">讀取情境說明...</div>
+            
+            <div class="results-grid">
+                <div class="result-card"><div class="result-label">能源自給率</div><div class="result-value" id="res-rate">-- %</div></div>
+                <div class="result-card"><div class="result-label">低於100%天數</div><div class="result-value" id="res-avg">-- 天</div></div>
+                <div class="result-card"><div class="result-label">減碳量 (噸)</div><div class="result-value" id="res-cover">--</div></div>
+                <div class="result-card"><div class="result-label">儲能需求(處)</div><div class="result-value" id="res-total">--</div></div>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">視窗內權屬分佈 (動態)</div>
+                <div class="chart-container"><canvas id="landPieChart"></canvas></div>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">每月發電與用電趨勢</div>
+                <div class="chart-container" style="height: 220px;"><canvas id="energyMixChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"></script>
+    <script src="https://js.arcgis.com/4.28/"></script>
+
+    <script>
+        require([
+            "esri/identity/IdentityManager", "esri/WebScene", "esri/views/SceneView",
+            "esri/core/reactiveUtils", "esri/geometry/geometryEngine"
+        ], function(esriId, WebScene, SceneView, reactiveUtils, geometryEngine) {
+
+            const portalUrl = "https://igisportal.geomatics.ncku.edu.tw/portal";
+            let view, pieChart, barChart, resBar, resLine, resStack;
+            const GLOBAL_STATS = { public: 1014, private: 2326 };
+            let currentBuildingLayerName = "情境一";
+
+            // 情境數據庫
+            const scenarios = [
+                { name: "情境一", full: "屋頂型光電", solar: 40564163.72, wind: 0, geo: 0, rate: 220.4, days: 69, co2: 19227.4136, store: 7, total: 40.56416372 },
+                { name: "情境二", full: "屋頂型光電+地面型光電", solar: 44373488.25, wind: 0, geo: 0, rate: 241.1, days: 61, co2: 21033.03343, store: 7, total: 44.37348825 },
+                { name: "情境三", full: "屋頂型光電+屋頂型風電", solar: 37132807.56, wind: 2451999, geo: 0, rate: 216.1, days: 61, co2: 18763.19852, store: 7, total: 39.58480701 },
+                { name: "情境四", full: "屋頂型光電+地熱", solar: 40564163.72, wind: 0, geo: 7540772, rate: 260.4, days: 36, co2: 22801.73978, store: 4, total: 48.10493625 },
+                { name: "情境五", full: "屋頂型光電+屋頂型風電+地熱", solar: 37132807.56, wind: 2451999, geo: 7540772, rate: 256.1, days: 29, co2: 22337.5247, store: 4, total: 47.12557954 },
+                { name: "情境六", full: "公有屋頂光電+地面型光電+屋頂型風電+地熱", solar: 8353529.271, wind: 7690211.507, geo: 7540772, rate: 130.6, days: 60, co2: 11179.05931, store: 3, total: 23.58451331 }
+            ];
+
+            const scenarioPowerData = {
+                "情境一": { generation: [2098739.8, 2112954.3, 3171051.1, 3273346.9, 4003384.1, 4488059.6, 5784064.8, 5288377.0, 4189402.6, 2385363.9, 1858011.7, 1911407.4], demand: [1015290, 996992, 984934, 1188572, 1745142, 1860360, 2348028, 2415055, 2450729, 2003005, 1472126, 1008527] },
+                "情境二": { generation: [2295829.5, 2311378.9, 3468840.1, 3580742.4, 4379336.3, 4909527.0, 6327238.4, 5785001.2, 4582823.6, 2609370.1, 2032495.0, 2090905.0], demand: [1015290, 996992, 984934, 1188572, 1745142, 1860360, 2348028, 2415055, 2450729, 2003005, 1472126, 1008527] },
+                "情境三": { generation: [2120080.4, 2123619.9, 3109182.3, 3200424.3, 3878796.3, 4317925.8, 5512470.2, 5055351.9, 4036165.5, 2387292.0, 1895129.3, 1948368.5], demand: [1015290, 996992, 984934, 1188572, 1745142, 1860360, 2348028, 2415055, 2450729, 2003005, 1472126, 1008527] },
+                "情境四": { generation: [2504855.8, 2511751.1, 3565024.7, 3748775.7, 4701440.9, 5232203.6, 6723276.0, 6254399.0, 5169694.2, 3186565.9, 2446862.1, 2314818.2], demand: [1015290, 996992, 984934, 1188572, 1745142, 1860360, 2348028, 2415055, 2450729, 2003005, 1472126, 1008527] },
+                "情境五": { generation: [2526196.4, 2522416.7, 3503155.9, 3675853.1, 4576853.1, 5062069.8, 6451681.4, 6021373.9, 5016457.1, 3188494.0, 2483979.7, 2351779.3], demand: [1015290, 996992, 984934, 1188572, 1745142, 1860360, 2348028, 2415055, 2450729, 2003005, 1472126, 1008527] },
+                "情境六": { generation: [1028764.6, 1013173.2, 1240041.6, 1337939.6, 1718604.5, 1859127.1, 2327968.9, 2251096.4, 2030429.9, 1484529.2, 1156441.8, 987463.3], demand: [1015290, 996992, 984934, 1188572, 1745142, 1860360, 2348028, 2415055, 2450729, 2003005, 1472126, 1008527] }
+            };
+
+            const axisStyle = { ticks: { fontSize: 9 }, scaleLabel: { display: true, fontSize: 10 } };
+
+            function initStaticCharts() {
+                // 情境發電總量對比
+                resBar = new Chart(document.getElementById('resBar'), {
+                    type: 'bar',
+                    data: { labels: ['情境一', '情境二', '情境三', '情境四', '情境五', '情境六'], datasets: [{ label: '發電(MWh)', data: scenarios.map(s=>s.total), backgroundColor: '#27ae60' }] },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                });
+
+                // 自給率趨勢
+                resLine = new Chart(document.getElementById('resLine'), {
+                    type: 'line',
+                    data: { labels: ['情境一', '情境二', '情境三', '情境四', '情境五', '情境六'], datasets: [{ label: '自給率%', data: scenarios.map(s=>s.rate), borderColor: '#c0392b', fill: false, tension: 0.3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                });
+
+                // 能源組成細節
+                resStack = new Chart(document.getElementById('resStack'), {
+                    type: 'bar',
+                    data: { labels: ['情境一', '情境二', '情境三', '情境四', '情境五', '情境六'], datasets: [
+                        { label: '太陽', data: scenarios.map(s=>s.solar/1000000), backgroundColor: '#f1c40f' },
+                        { label: '風能', data: scenarios.map(s=>s.wind/1000000), backgroundColor: '#95a5a6' },
+                        { label: '地熱', data: scenarios.map(s=>s.geo/1000000), backgroundColor: '#e67e22' }
+                    ]},
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 8, fontSize: 9 } }, scales: { xAxes: [{ stacked: true, ticks: { fontSize: 9 } }], yAxes: [{ stacked: true, ticks: { fontSize: 9 } }] } }
+                });
+            }
+
+            function initDynamicCharts() {
+                const ctxPie = document.getElementById('landPieChart').getContext('2d');
+                pieChart = new Chart(ctxPie, {
+                    type: 'pie',
+                    data: { labels: ['公有', '私有'], datasets: [{ data: [GLOBAL_STATS.public, GLOBAL_STATS.private], backgroundColor: ['#005e95', '#ff9f40'], borderWidth: 1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 10, fontSize: 10 } } }
+                });
+
+                const ctxBar = document.getElementById('energyMixChart').getContext('2d');
+                barChart = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: { labels: ['1','2','3','4','5','6','7','8','9','10','11','12'], datasets: [
+                        { label: '發電', type: 'bar', data: [], backgroundColor: 'rgba(0, 94, 149, 0.7)' },
+                        { label: '用電', type: 'line', data: [], borderColor: '#ff9f40', fill: false, tension: 0.1 }
+                    ]},
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 10, fontSize: 10 } }, scales: { yAxes: [{ ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                });
+            }
+
+            async function switchScenario(sceneId, name) {
+                currentBuildingLayerName = name;
+                document.getElementById("scenario-display-name").innerText = name;
+                try {
+                    await esriId.getCredential(portalUrl + "/sharing");
+                    const scene = new WebScene({ portalItem: { id: sceneId, portal: { url: portalUrl } } });
+                    if (!view) {
+                        view = new SceneView({ container: "viewDiv", map: scene });
+                        await view.when();
+                        initStaticCharts();
+                        initDynamicCharts();
+                    } else { view.map = scene; }
+                    updateScenarioUI();
+                    view.when(() => { runGeoDistinctStatistics(); });
+                    reactiveUtils.when(() => view.stationary === true, runGeoDistinctStatistics);
+                } catch (e) { console.error(e); }
+            }
+
+            function updateScenarioUI() {
+                const s = scenarios.find(item => item.name === currentBuildingLayerName);
+                document.getElementById("res-rate").innerText = s.rate + " %";
+                document.getElementById("res-avg").innerText = s.days + " 天";
+                document.getElementById("res-cover").innerText = Math.round(s.co2).toLocaleString();
+                document.getElementById("res-total").innerText = s.store;
+                document.getElementById("scenario-text-desc").innerText = s.full;
+                if (barChart) {
+                    const data = scenarioPowerData[currentBuildingLayerName];
+                    barChart.data.datasets[0].data = data.generation;
+                    barChart.data.datasets[1].data = data.demand;
+                    barChart.update();
+                }
+            }
+
+            async function runGeoDistinctStatistics() {
+                const publicLayer = view.map.allLayers.find(l => l.title === "公有土地地籍圖");
+                const buildLayer = view.map.allLayers.find(l => l.title === currentBuildingLayerName);
+                if (!publicLayer || !buildLayer) return;
+                try {
+                    const bLV = await view.whenLayerView(buildLayer);
+                    const lLV = await view.whenLayerView(publicLayer);
+                    const lRes = await lLV.queryFeatures({ geometry: view.extent, returnGeometry: true });
+                    const landGeoms = lRes.features.map(f => f.geometry).filter(g => g);
+                    const bRes = await bLV.queryFeatures({ geometry: view.extent, returnGeometry: true });
+                    let pub = 0; let pri = 0; const seen = new Set();
+                    bRes.features.forEach(f => {
+                        const center = f.geometry.extent ? f.geometry.extent.center : f.geometry;
+                        const key = `${center.x.toFixed(2)},${center.y.toFixed(2)}`;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            if (landGeoms.some(lg => geometryEngine.intersects(lg, center))) pub++; else pri++;
+                        }
+                    });
+                    if (pieChart) { pieChart.data.datasets[0].data = [pub, pri]; pieChart.update(); }
+                } catch (err) { console.error(err); }
+            }
+
+            document.querySelectorAll(".scenario-btn").forEach(btn => {
+                btn.addEventListener("click", e => {
+                    document.querySelectorAll(".scenario-btn").forEach(b => b.classList.remove("active"));
+                    e.target.classList.add("active");
+                    switchScenario(e.target.dataset.id, e.target.dataset.name);
+                });
+            });
+
+            switchScenario("90f58d1483704da0b21edb1e127c2b18", "情境一");
+        });
+    </script>
+</body>
+</html>

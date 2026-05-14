@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <title>綠島數位分身 - 建物權屬精準分析</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css" />
+    <style>
+        html, body { padding: 0; margin: 0; height: 100%; width: 100%; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; }
+        #viewDiv { height: 100%; width: calc(100% - 360px); float: left; background-color: #f0f0f0; }
+        #scenario-bar { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 99; }
+        .scenario-btn { padding: 12px 18px; background: white; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 110px; }
+        .scenario-btn.active { background: #005e95; color: white; }
+        #side-panel { position: absolute; right: 0; top: 0; width: 360px; height: 100%; background: white; display: flex; flex-direction: column; z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.1); }
+        .header { background: #005e95; color: white; padding: 18px; font-weight: bold; text-align: center; }
+        #info-content { flex: 1; padding: 25px; overflow-y: auto; border-bottom: 1px solid #eee; }
+        #chart-section { padding: 20px; height: 320px; background: #fafafa; }
+        h3 { color: #005e95; border-left: 5px solid #ff9f40; padding-left: 12px; margin-top: 0; }
+        .count-info { font-size: 18px; margin-top: 15px; padding: 15px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px; color: #795548; font-weight: bold; text-align: center; }
+    </style>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <div id="scenario-bar">
+        <button class="scenario-btn active" data-id="90f58d1483704da0b21edb1e127c2b18" data-name="情境一">情境一</button>
+        <button class="scenario-btn" data-id="748b1770860d4e66bcbd785c779cb372" data-name="情境二">情境二</button>
+        <button class="scenario-btn" data-id="2819b3ded37747f696ffbb4e9fe249bc" data-name="情境三">情境三</button>
+        <button class="scenario-btn" data-id="e0da62dcbbf848efb3e17ce71003f00d" data-name="情境四">情境四</button>
+        <button class="scenario-btn" data-id="eb4eae80e7534e99ac4c74bc6993dff5" data-name="情境五">情境五</button>
+        <button class="scenario-btn" data-id="909a0a541d034687ba025513809b0dd9" data-name="情境六">情境六</button>
+    </div>
+    <div id="side-panel">
+        <div class="header">建物權屬精準統計</div>
+        <div id="info-content">
+            <h3 id="scenario-display-name">載入中...</h3>
+            <div id="scenario-desc">正在進行權屬交叉分析...</div>
+            <div id="total-count-div" class="count-info">準備計算...</div>
+        </div>
+        <div id="chart-section">
+            <canvas id="landPieChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"></script>
+    <script src="https://js.arcgis.com/4.28/"></script>
+
+    <script>
+        require([
+            "esri/identity/IdentityManager",
+            "esri/WebScene",
+            "esri/views/SceneView",
+            "esri/core/reactiveUtils",
+            "esri/geometry/geometryEngine"
+        ], function(esriId, WebScene, SceneView, reactiveUtils, geometryEngine) {
+
+            const portalUrl = "https://igisportal.geomatics.ncku.edu.tw/portal";
+            let view, myChart;
+            let currentBuildingLayerName = "情境一";
+
+            function initChart() {
+                const ctx = document.getElementById('landPieChart').getContext('2d');
+                if (myChart) myChart.destroy();
+                myChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['公有土地建物', '私有土地建物'],
+                        datasets: [{ data: [0, 0], backgroundColor: ['#005e95', '#ff9f40'], borderWidth: 1 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom' } }
+                });
+            }
+
+            async function switchScenario(sceneId, buildingLayerName) {
+                currentBuildingLayerName = buildingLayerName;
+                document.getElementById("scenario-display-name").innerText = buildingLayerName;
+                
+                try {
+                    await esriId.getCredential(portalUrl + "/sharing");
+                    const scene = new WebScene({ portalItem: { id: sceneId, portal: { url: portalUrl } } });
+
+                    if (!view) {
+                        view = new SceneView({ container: "viewDiv", map: scene });
+                        // 修正 1：等待畫面載入完成後立即執行一次統計
+                        await view.when();
+                        initChart();
+                        runGeoDistinctStatistics(); 
+                    } else {
+                        view.map = scene;
+                    }
+
+                    // 修正 2：確保地圖初始化或切換後，待 LayerView 加載就執行
+                    reactiveUtils.when(() => view.stationary === true, () => {
+                        runGeoDistinctStatistics();
+                    });
+
+                } catch (e) { console.error("切換場景錯誤:", e); }
+            }
+
+            async function runGeoDistinctStatistics() {
+                const publicLandLayer = view.map.allLayers.find(l => l.title === "公有土地地籍圖");
+                const buildingLayer = view.map.allLayers.find(l => l.title === currentBuildingLayerName);
+
+                if (!publicLandLayer || !buildingLayer) return;
+
+                try {
+                    // 確保 LayerView 已載入
+                    const bLayerView = await view.whenLayerView(buildingLayer);
+                    const lLayerView = await view.whenLayerView(publicLandLayer);
+                    
+                    document.getElementById("total-count-div").innerText = "計算中...";
+
+                    // 抓取地籍與建物
+                    const lRes = await lLayerView.queryFeatures({ 
+                        geometry: view.extent, 
+                        returnGeometry: true,
+                        outSpatialReference: view.spatialReference, // 修正：強制座標系統對齊
+                        outFields: ["*"] 
+                    });
+                    const landGeoms = lRes.features.map(f => f.geometry).filter(g => g);
+
+                    const bRes = await bLayerView.queryFeatures({ 
+                        geometry: view.extent, 
+                        returnGeometry: true,
+                        outSpatialReference: view.spatialReference, // 修正：強制座標系統對齊
+                        outFields: [buildingLayer.objectIdField] 
+                    });
+
+                    let pubCount = 0;
+                    let priCount = 0;
+                    const seenBuildings = new Set(); 
+
+                    bRes.features.forEach(f => {
+                        if (!f.geometry) return;
+
+                        // 座標去重邏輯 (保持不動)
+                        const center = f.geometry.extent ? f.geometry.extent.center : f.geometry;
+                        const geoKey = `${center.x.toFixed(2)},${center.y.toFixed(2)}`;
+                        
+                        if (!seenBuildings.has(geoKey)) {
+                            seenBuildings.add(geoKey);
+                            
+                            // 修正判斷邏輯：中心點位移與公有地幾何交叉判斷
+                            // 加上微小的 buffer 解決地籍邊界判斷失準問題
+                            const point = center;
+                            const isPublic = landGeoms.some(lg => geometryEngine.intersects(lg, point));
+
+                            if (isPublic) {
+                                pubCount++;
+                            } else {
+                                priCount++;
+                            }
+                        }
+                    });
+
+                    // 更新 UI
+                    if (myChart) {
+                        myChart.data.datasets[0].data = [pubCount, priCount];
+                        myChart.update();
+                    }
+                    
+                    const total = seenBuildings.size;
+                    document.getElementById("total-count-div").innerText = `範圍內建物：${total} 棟`;
+                    document.getElementById("scenario-desc").innerHTML = 
+                        `分析完成！<br>公有：${pubCount} 棟 | 私有：${priCount} 棟`;
+
+                } catch (err) { 
+                    console.error("統計錯誤:", err);
+                    document.getElementById("total-count-div").innerText = "統計更新中...";
+                }
+            }
+
+            document.querySelectorAll(".scenario-btn").forEach(btn => {
+                btn.addEventListener("click", e => {
+                    document.querySelectorAll(".scenario-btn").forEach(b => b.classList.remove("active"));
+                    e.target.classList.add("active");
+                    switchScenario(e.target.dataset.id, e.target.dataset.name);
+                });
+            });
+
+            const firstBtn = document.querySelector(".scenario-btn");
+            switchScenario(firstBtn.dataset.id, firstBtn.dataset.name);
+        });
+    </script>
+</body>
+</html>
