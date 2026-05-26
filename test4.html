@@ -39,6 +39,7 @@
         .mode-btn:hover { background: #f4f6f7; }
         .mode-btn.active { background: #e67e22; color: white; border-color: #d35400; }
 
+        /* 擴大後的建物屬性面板 */
         #building-popup-panel { position: absolute; top: 20px; right: 20px; width: 340px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); z-index: 99; border: 1px solid #ddd; display: none; flex-direction: column; overflow: hidden; }
         .popup-header { background: #e67e22; color: white; padding: 10px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
         .popup-close { cursor: pointer; font-size: 18px; font-weight: bold; }
@@ -47,8 +48,11 @@
         .popup-table td { padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
         .popup-table td.label-td { font-weight: bold; color: #555; width: 40%; }
         .popup-table td.value-td { color: #000; text-align: right; }
+        
+        /* 圖表高度也同步擴大 */
         .popup-chart-container { height: 180px; margin-top: 5px; position: relative; }
 
+        /* 搜尋面板內部樣式 */
         .search-title { font-size: 13px; font-weight: bold; color: #2c3e50; text-align: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; margin-bottom: 8px; }
         .search-input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; text-align: center; font-family: inherit; margin-bottom: 6px; }
         .search-btn-go { width: 100%; box-sizing: border-box; padding: 8px; background: #005e95; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; margin-top: 4px; }
@@ -179,12 +183,12 @@
 
                     <div class="chart-box" style="margin-bottom: 5px; padding: 5px;">
                         <div class="chart-title" style="margin-bottom: 2px;">視域內建物權屬佔比</div>
-                        <div class="chart-container" style="height: 140px;"><canvas id="landPieChart"></canvas></div>
+                        <div class="chart-container" style="height: 120px;"><canvas id="landPieChart"></canvas></div>
                     </div>
 
                     <div class="chart-box" style="margin-bottom: 5px; padding: 5px;">
                         <div class="chart-title" style="margin-bottom: 2px;">視域內潛在發電量分佈</div>
-                        <div class="chart-container" style="height: 140px;"><canvas id="landEnergyPieChart"></canvas></div>
+                        <div class="chart-container" style="height: 120px;"><canvas id="landEnergyPieChart"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -217,6 +221,7 @@
             let highlightHandle = null; 
             let geoStatHandler = null;
 
+            // 圖層庫設定
             const mapLibraryCompare = {
                 "情境一": "90f58d1483704da0b21edb1e127c2b18", "情境二": "748b1770860d4e66bcbd785c779cb372", "情境三": "2819b3ded37747f696ffbb4e9fe249bc",
                 "情境四": "e0da62dcbbf848efb3e17ce71003f00d", "情境五": "eb4eae80e7534e99ac4c74bc6993dff5", "情境六": "909a0a541d034687ba025513809b0dd9"
@@ -335,6 +340,7 @@
                 });
             }
 
+            // --- 核心：公私有地動態視域分析 (Geoprocessing) ---
             function setupGeoDistinctStatistics() {
                 if(geoStatHandler) geoStatHandler.remove();
                 geoStatHandler = reactiveUtils.watch(() => view.stationary, (stationary) => {
@@ -342,31 +348,17 @@
                 });
             }
 
-            // 【終極防呆抓取】使用 OID 遞迴機制，徹底突破各類 FeatureLayer 或 SceneLayer 的上限問題
+            // Task 2 & 3: 加入分頁抓取邏輯 (避開 maxRecordCount) 並改讀取 Long 圖層計算能源
             async function fetchAllFeatures(layer, query) {
                 let features = [];
-                try {
-                    const idQuery = query.clone();
-                    idQuery.returnGeometry = false;
-                    idQuery.outFields = [layer.objectIdField || "OBJECTID"];
-                    const objectIds = await layer.queryObjectIds(idQuery);
-                    
-                    if (!objectIds || objectIds.length === 0) return [];
-                    const batchSize = 1000;
-                    for (let i = 0; i < objectIds.length; i += batchSize) {
-                        const batchQuery = layer.createQuery();
-                        batchQuery.objectIds = objectIds.slice(i, i + batchSize);
-                        batchQuery.returnGeometry = query.returnGeometry;
-                        batchQuery.outFields = query.outFields;
-                        if(query.outSpatialReference) batchQuery.outSpatialReference = query.outSpatialReference;
-                        
-                        let res = await layer.queryFeatures(batchQuery);
-                        if(res.features) features.push(...res.features);
-                    }
-                } catch(e) {
-                    console.warn("批次查詢失敗，退回基本查詢模式", e);
+                let start = 0, num = 2000;
+                while (true) {
+                    query.start = start; 
+                    query.num = num;
                     let res = await layer.queryFeatures(query);
-                    if(res.features) features.push(...res.features);
+                    features.push(...res.features);
+                    if (res.features.length < num || !res.exceededTransferLimit) break;
+                    start += num;
                 }
                 return features;
             }
@@ -374,17 +366,24 @@
             async function runGeoDistinctStatistics() {
                 if(currentSystemMode !== 'land') return;
                 
-                let publicLayer = view.map.allLayers.find(l => l.title === "公有土地地籍圖" || (l.title && l.title.includes("公有")));
-                
+                let buildLayer = view.map.allLayers.find(l => (l.type === "feature" || l.type === "scene") && l.title && l.title.includes(currentBuildingLayerName) && l.title !== "公有土地地籍圖");
+                let publicLayer = view.map.allLayers.find(l => l.title === "公有土地地籍圖" || l.title.includes("公有"));
+                if(!buildLayer) return;
+
                 try {
-                    // 1. 抓取當前畫面所有公有地 2D Polygon
+                    const bQ = buildLayer.createQuery();
+                    bQ.geometry = view.extent;
+                    bQ.returnGeometry = true;
+                    bQ.outFields = ["*"];
+                    const bFeats = await fetchAllFeatures(buildLayer, bQ);
+                    
+                    let pubBldg = 0, priBldg = 0, pubArea = 0, priArea = 0;
+                    
                     let pubGeoms = [];
-                    let pubArea = 0;
                     if(publicLayer) {
                         const pQ = publicLayer.createQuery();
                         pQ.geometry = view.extent;
                         pQ.returnGeometry = true;
-                        pQ.outSpatialReference = view.spatialReference;
                         const pFeats = await fetchAllFeatures(publicLayer, pQ);
                         pubGeoms = pFeats.map(f => f.geometry).filter(g=>g);
                         pubGeoms.forEach(g => {
@@ -393,43 +392,34 @@
                         });
                     }
                     
-                    // 2. 【核心修正】不使用會產生誤差的 3D 場景圖層，而是「直接向後端的 2D 建築特徵圖層」索取 2D 足跡！
-                    const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
-                    const bLayer = new FeatureLayer({ url: wideUrl });
-                    const bQ = bLayer.createQuery();
-                    bQ.geometry = view.extent;
-                    bQ.returnGeometry = true;
-                    bQ.outSpatialReference = view.spatialReference;
-                    bQ.outFields = ["energy_typ", "energytype", "ENERGY_TYP", "ENERGYTYPE", "sup01", "sup02", "sup03", "sup04", "sup05", "sup06", "sup07", "sup08", "sup09", "sup10", "sup11", "sup12", "SUP01", "SUP02", "SUP03", "SUP04", "SUP05", "SUP06", "SUP07", "SUP08", "SUP09", "SUP10", "SUP11", "SUP12"]; 
-                    
-                    const bFeats = await fetchAllFeatures(bLayer, bQ);
-                    
-                    let pubBldg = 0, priBldg = 0, priArea = 0;
-                    let solarGen = 0, windGen = 0, geoGen = 0;
-
                     bFeats.forEach(f => {
-                        let isPub = false;
-                        if (f.geometry) {
-                            // 3. 【核心修正】使用 2D 多邊形的「數學重心 (Centroid)」做交疊判定，確保數量精準對齊桌機版 GIS 結果 1014/2326 棟
-                            let pt = f.geometry.type === "polygon" ? (f.geometry.centroid || f.geometry.extent.center) : (f.geometry.extent ? f.geometry.extent.center : f.geometry);
-                            isPub = pubGeoms.some(pg => geometryEngine.intersects(pg, pt));
-                        }
+                        const center = f.geometry.extent ? f.geometry.extent.center : f.geometry;
+                        let isPub = pubGeoms.some(pg => geometryEngine.intersects(pg, center));
                         if(isPub) pubBldg++; else priBldg++;
                         
-                        if(f.geometry && f.geometry.type === "polygon") {
+                        if(f.geometry.type === "polygon") {
                             let area = geometryEngine.planarArea(f.geometry, "square-meters");
                             if(!isPub) priArea += area; 
                         }
+                    });
 
-                        let eTyp = f.attributes.energy_typ || f.attributes.energytype || f.attributes.ENERGY_TYP || f.attributes.ENERGYTYPE;
-                        let sumGen = 0;
-                        for(let i=1; i<=12; i++) {
-                            let m = i < 10 ? "0"+i : i;
-                            sumGen += parseFloat(f.attributes["sup"+m] ?? f.attributes["SUP"+m] ?? 0);
-                        }
-                        if(eTyp === "roof_solar") solarGen += sumGen;
-                        else if(eTyp === "roof_wind") windGen += sumGen;
-                        else if(eTyp === "geo" || eTyp === "geothermal") geoGen += sumGen;
+                    // Task 3: 指向對應的 Long (render) 圖層以精確獲取能源型態與發電量
+                    const longUrl = backendRestUrls['render'][currentBuildingLayerName];
+                    const lLayer = new FeatureLayer({ url: longUrl });
+                    const lQ = lLayer.createQuery();
+                    lQ.geometry = view.extent;
+                    lQ.returnGeometry = false;
+                    lQ.outFields = ["energy_typ", "ENERGY_TYP", "supply_kwh", "SUPPLY_KWH"];
+                    
+                    const lFeats = await fetchAllFeatures(lLayer, lQ);
+                    let solarGen = 0, windGen = 0, geoGen = 0;
+
+                    lFeats.forEach(f => {
+                        let eTyp = f.attributes.energy_typ || f.attributes.ENERGY_TYP;
+                        let kwh = parseFloat(f.attributes.supply_kwh ?? f.attributes.SUPPLY_KWH ?? 0);
+                        if(eTyp === "roof_solar") solarGen += kwh;
+                        else if(eTyp === "roof_wind") windGen += kwh;
+                        else if(eTyp === "geo" || eTyp === "geothermal") geoGen += kwh;
                     });
                     
                     document.getElementById("land-pub-bldg").innerText = pubBldg + " 棟";
@@ -454,12 +444,7 @@
                     const scene = new WebScene({ portalItem: { id: sceneId, portal: { url: portalUrl } } });
 
                     if (!view) {
-                        view = new SceneView({ 
-                            container: "viewDiv", 
-                            map: scene, 
-                            popup: { autoOpenEnabled: false }, 
-                            highlightOptions: { color: [255, 0, 0, 1], haloOpacity: 0.9, fillOpacity: 0.5 } 
-                        });
+                        view = new SceneView({ container: "viewDiv", map: scene, popup: { autoOpenEnabled: false }, highlightOptions: { color: [234, 209, 231, 1], haloOpacity: 0.9, fillOpacity: 0.2 } });
                         await view.when();
                         initStaticCharts();
                         initDynamicCharts();
@@ -496,19 +481,19 @@
             }
             
             function showDataInPopup(attributes) {
-                // 【核心修正】全覆蓋大小寫相容，確保屬性表名稱與圖表數據不會因為情境欄位大小寫不同而失效
-                document.getElementById("pop-building-name").innerText = attributes.Name || attributes.name || attributes.NAME || "未命名";
+                document.getElementById("pop-building-name").innerText = attributes.Name || attributes.name || "未命名";
                 
-                let eTyp = attributes.energy_typ || attributes.energytype || attributes.ENERGY_TYP || attributes.ENERGYTYPE;
+                let eTyp = attributes.energytype || attributes.ENERGYTYPE || attributes.energy_typ || attributes.ENERGY_TYP;
                 if (eTyp === "roof_solar") eTyp = "光電";
                 else if (eTyp === "roof_wind") eTyp = "風電";
                 else eTyp = "不建議設置";
                 document.getElementById("pop-energy-typ").innerText = eTyp;
 
-                let isHotelVal = attributes.IsHotel !== undefined ? attributes.IsHotel : (attributes.ISHOTEL !== undefined ? attributes.ISHOTEL : attributes.ishotel);
+                let isHotelVal = attributes.IsHotel !== undefined ? attributes.IsHotel : attributes.ISHOTEL;
                 document.getElementById("pop-is-hotel").innerText = (isHotelVal == 1 || isHotelVal == "1") ? "是" : "否";
                 document.getElementById("pop-scenario").innerText = scenarios.find(item => item.name === currentBuildingLayerName).full;
 
+                // Task 1: 不論是否在 Render 模式下，皆顯示逐月發電量圖表（因為屬性資料已強制從 Wide 圖層獲取）
                 document.getElementById("mini-chart-title").style.display = "block";
                 document.getElementById("mini-chart-container").style.display = "block";
                 
@@ -532,20 +517,19 @@
                         if (!result) return;
                         
                         const graphic = result.graphic;
-                        const bName = graphic.attributes.Name || graphic.attributes.name || graphic.attributes.NAME; 
+                        const bName = graphic.attributes.Name || graphic.attributes.name;
                         
                         view.whenLayerView(graphic.layer).then(lv => { 
                             if (highlightHandle) highlightHandle.remove(); 
-                            let oidField = graphic.layer.objectIdField || "OBJECTID";
-                            let oid = graphic.attributes[oidField] || graphic.attributes.OBJECTID || graphic.attributes.objectid;
-                            highlightHandle = lv.highlight([oid]); 
+                            highlightHandle = lv.highlight(graphic); 
                         });
 
+                        // Task 1: 始終強制採用 Compare (wide) 圖層 API 以確保獲得 12 個月的發電量欄位
                         const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
+                        
                         const q = new FeatureLayer({ url: wideUrl }).createQuery();
                         q.outFields = ["*"];
-                        const objId = graphic.attributes.OBJECTID || graphic.attributes.objectid;
-                        q.where = bName ? `Name='${bName}' OR name='${bName}' OR NAME='${bName}'` : `OBJECTID=${objId} OR objectid=${objId}`;
+                        q.where = bName ? `Name = '${bName}' OR name = '${bName}'` : `OBJECTID = ${graphic.attributes.OBJECTID}`;
 
                         new FeatureLayer({ url: wideUrl }).queryFeatures(q).then(res => {
                             showDataInPopup(res.features.length > 0 ? res.features[0].attributes : graphic.attributes);
@@ -555,6 +539,50 @@
                 document.getElementById("close-building-popup").addEventListener("click", hideBuildingPopup);
             }
 
+            // Task 1 & 5: 共用的檢索高亮與圖表彈出邏輯
+            function highlightAndPopupBuilding(whereClause, geometry) {
+                const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
+                const qWide = new FeatureLayer({ url: wideUrl }).createQuery();
+                
+                if (whereClause) qWide.where = whereClause;
+                if (geometry) {
+                    qWide.geometry = geometry;
+                    qWide.spatialRelationship = "intersects";
+                    qWide.distance = 15; // 給予地址座標 15 米的緩衝，以精確捕捉建物
+                    qWide.units = "meters";
+                }
+                qWide.outFields = ["*"];
+                
+                new FeatureLayer({ url: wideUrl }).queryFeatures(qWide).then(res => {
+                    if (res.features.length) {
+                        const attrs = res.features[0].attributes;
+                        showDataInPopup(attrs);
+                        
+                        // 定位目前畫面上真正的活動圖層進行 Highlight
+                        let activeLayer = view.map.allLayers.find(l => (l.type === "feature" || l.type === "scene") && l.title && l.title.includes(currentBuildingLayerName));
+                        if (activeLayer) {
+                            view.whenLayerView(activeLayer).then(lv => {
+                                const bName = attrs.Name || attrs.name;
+                                const qAct = activeLayer.createQuery();
+                                qAct.where = bName ? `Name='${bName}' OR name='${bName}'` : `OBJECTID=${attrs.OBJECTID}`;
+                                activeLayer.queryFeatures(qAct).then(sRes => {
+                                    if (highlightHandle) highlightHandle.remove();
+                                    if (sRes.features.length) {
+                                        highlightHandle = lv.highlight(sRes.features[0]);
+                                    } else {
+                                        // 備用 Highlight
+                                        highlightHandle = lv.highlight(res.features[0]); 
+                                    }
+                                });
+                            });
+                        }
+                    } else {
+                        if (geometry) alert("該地址周邊無對應建物資料！");
+                    }
+                });
+            }
+
+            // --- 雙軌精準搜尋功能 (地址與房屋編號) ---
             function setupSearchFunctionality() {
                 const menuArea = document.getElementById("search-menu-area");
                 const inputArea = document.getElementById("search-input-area");
@@ -619,50 +647,20 @@
                     });
                 };
 
+                // Task 5: 搜尋時連動反白上色邏輯與彈窗功能
                 document.getElementById("btn-search-go").onclick = () => {
-                    const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
-
-                    // 【核心修正】絕對安全的鎖定活動建物圖層，排除名稱不固定的風險
-                    let activeLayer = view.map.allLayers.find(l => l.type === "scene" && l.title !== "Ground");
-                    if (!activeLayer) {
-                        activeLayer = view.map.allLayers.find(l => (l.type === "feature" || l.type === "scene") && l.title && !l.title.includes("公有") && !l.title.includes("門牌") && !l.title.includes("Ground"));
-                    }
-
                     if (searchType === 'building') {
                         const val = document.getElementById("search-building-input").value.trim();
                         if (!val) return alert("請輸入房屋編號！");
                         
-                        if (activeLayer) {
-                            const query = activeLayer.createQuery();
-                            // 【核心修正】全域相容屬性欄位大小寫
-                            query.where = `Name='${val}' OR name='${val}' OR NAME='${val}'`;
-                            query.returnGeometry = true;
-                            query.outFields = ["*"];
-                            
-                            activeLayer.queryFeatures(query).then(res => {
-                                if (res.features.length) {
-                                    const matchedBuilding = res.features[0];
-                                    view.goTo({ target: matchedBuilding.geometry, zoom: 20, tilt: 45, heading: 30 }, { duration: 1500 }).then(() => {
-                                        view.whenLayerView(activeLayer).then(lv => {
-                                            if (highlightHandle) highlightHandle.remove();
-                                            let oidField = activeLayer.objectIdField || "OBJECTID";
-                                            let oid = matchedBuilding.attributes[oidField] || matchedBuilding.attributes.OBJECTID || matchedBuilding.attributes.objectid;
-                                            highlightHandle = lv.highlight([oid]);
-                                            
-                                            const bName = matchedBuilding.attributes.Name || matchedBuilding.attributes.name || matchedBuilding.attributes.NAME;
-                                            const objId = matchedBuilding.attributes.OBJECTID || matchedBuilding.attributes.objectid;
-
-                                            const qWide = new FeatureLayer({ url: wideUrl }).createQuery();
-                                            qWide.where = bName ? `Name='${bName}' OR name='${bName}' OR NAME='${bName}'` : `OBJECTID=${objId} OR objectid=${objId}`;
-                                            qWide.outFields = ["*"];
-                                            new FeatureLayer({ url: wideUrl }).queryFeatures(qWide).then(wRes => {
-                                                showDataInPopup(wRes.features.length ? wRes.features[0].attributes : matchedBuilding.attributes);
-                                            }).catch(() => showDataInPopup(matchedBuilding.attributes));
-                                        });
-                                    });
-                                } else alert("找不到該房屋編號！");
-                            });
-                        }
+                        const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
+                        new FeatureLayer({ url: wideUrl }).queryFeatures({ where: `Name='${val}' OR name='${val}'`, returnGeometry: true, outFields: ["*"], outSpatialReference: view.spatialReference }).then(res => {
+                            if(res.features.length) {
+                                view.goTo({ target: res.features[0].geometry, zoom: 20, tilt: 45, heading: 30 }, { duration: 1500 }).then(() => {
+                                    highlightAndPopupBuilding(`Name='${val}' OR name='${val}'`, null);
+                                });
+                            } else alert("找不到該房屋編號！");
+                        });
                     } else {
                         const v = document.getElementById("sel-village").value, n = document.getElementById("sel-neighborhood").value, h = document.getElementById("sel-number").value;
                         if(!v || !n || !h) return alert("請完整選擇地址！");
@@ -672,45 +670,9 @@
                                 let feat = res.features[0];
                                 let geom = feat.geometry;
                                 if(!geom && feat.attributes["橫座標"]) geom = { type: "point", x: parseFloat(feat.attributes["橫座標"]), y: parseFloat(feat.attributes["縱座標"]), spatialReference: view.spatialReference };
-                                
                                 if(geom) {
                                     view.goTo({ target: geom, zoom: 20, tilt: 45, heading: 30 }, { duration: 1500 }).then(() => {
-                                        
-                                        if (activeLayer) {
-                                            view.whenLayerView(activeLayer).then(function(layerView) {
-                                                const spatialQuery = activeLayer.createQuery();
-                                                spatialQuery.geometry = geom;
-                                                spatialQuery.distance = 15;
-                                                spatialQuery.units = "meters";
-                                                spatialQuery.returnGeometry = true;
-                                                spatialQuery.outFields = ["*"];
-
-                                                activeLayer.queryFeatures(spatialQuery).then(bRes => {
-                                                    if (bRes.features.length > 0) {
-                                                        const matchedBuilding = bRes.features[0];
-                                                        if (highlightHandle) highlightHandle.remove();
-                                                        
-                                                        let oidField = activeLayer.objectIdField || "OBJECTID";
-                                                        let oid = matchedBuilding.attributes[oidField] || matchedBuilding.attributes.OBJECTID || matchedBuilding.attributes.objectid;
-                                                        highlightHandle = layerView.highlight([oid]);
-                                                        
-                                                        const bName = matchedBuilding.attributes.Name || matchedBuilding.attributes.name || matchedBuilding.attributes.NAME;
-                                                        const objId = matchedBuilding.attributes.OBJECTID || matchedBuilding.attributes.objectid;
-                                                        
-                                                        const qWide = new FeatureLayer({ url: wideUrl }).createQuery();
-                                                        qWide.outFields = ["*"];
-                                                        qWide.where = bName ? `Name='${bName}' OR name='${bName}' OR NAME='${bName}'` : `OBJECTID=${objId} OR objectid=${objId}`;
-                                                        
-                                                        new FeatureLayer({ url: wideUrl }).queryFeatures(qWide).then(wRes => {
-                                                            showDataInPopup(wRes.features.length ? wRes.features[0].attributes : matchedBuilding.attributes);
-                                                        }).catch(() => showDataInPopup(matchedBuilding.attributes));
-                                                        
-                                                    } else {
-                                                        alert("該地址周邊無對應建物資料！");
-                                                    }
-                                                });
-                                            });
-                                        }
+                                        highlightAndPopupBuilding(null, geom);
                                     });
                                 }
                             } else alert("找不到該地址座標！");

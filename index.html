@@ -7,24 +7,17 @@
     <style>
         html, body { padding: 0; margin: 0; height: 100%; width: 100%; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; display: flex; }
         
-        /* 左側固定面板 */
         #left-panel { width: 320px; height: 100%; background: #f8f9fa; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
-        
-        /* 中間地圖區域 */
         #center-container { flex: 1; position: relative; background-color: #f0f0f0; }
         #viewDiv { height: 100%; width: 100%; }
         
-        /* 右側雙面板組合 */
         #right-wrapper { width: 320px; height: 100%; display: flex; flex-direction: column; border-left: 1px solid #ddd; z-index: 100; }
         #right-panel-top { flex: 1; background: white; overflow-y: auto; border-bottom: 2px solid #ddd; }
-        
-        /* 系統功能控制面板上下拉大（220px -> 245px）以去除滑桿 */
         #right-panel-bottom { height: 245px; background: #fdfdfd; overflow-y: auto; }
 
         .header { background: #005e95; color: white; padding: 15px; font-weight: bold; text-align: center; font-size: 16px; }
         .content-padding { padding: 12px; }
         
-        /* 情境按鈕調整至地圖左下角 */
         #scenario-bar { position: absolute; bottom: 30px; left: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 99; }
         .scenario-btn { padding: 10px 15px; background: white; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 110px; font-size: 13px; }
         .scenario-btn.active { background: #005e95; color: white; }
@@ -33,7 +26,6 @@
         .chart-title { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; }
         .chart-container { height: 180px; position: relative; }
         
-        /* 格狀佈局 */
         .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
         .result-card { background: #fff; border: 1px solid #e0e0e0; padding: 8px; border-radius: 6px; text-align: center; }
         .result-label { font-size: 11px; color: #666; }
@@ -43,13 +35,11 @@
         .scenario-text-desc { font-size: 12px; color: #555; background: #f0f7ff; padding: 8px; border-radius: 4px; line-height: 1.4; border-left: 3px solid #005e95; margin-bottom: 10px; }
         .static-count-box { padding: 10px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 6px; color: #0d47a1; font-weight: bold; font-size: 13px; margin-bottom: 15px; }
 
-        /* 功能面板按鈕專用樣式 */
         .mode-btn { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ccc; background: white; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s; }
         .mode-btn:hover { background: #f4f6f7; }
         .mode-btn.active { background: #e67e22; color: white; border-color: #d35400; }
 
-        /* 自訂單棟建物屬性彈出面板樣式 */
-        #building-popup-panel { position: absolute; top: 20px; right: 20px; width: 280px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); z-index: 99; border: 1px solid #ddd; display: none; flex-direction: column; overflow: hidden; }
+        #building-popup-panel { position: absolute; top: 20px; right: 20px; width: 340px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); z-index: 99; border: 1px solid #ddd; display: none; flex-direction: column; overflow: hidden; }
         .popup-header { background: #e67e22; color: white; padding: 10px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
         .popup-close { cursor: pointer; font-size: 18px; font-weight: bold; }
         .popup-body { padding: 12px; font-size: 13px; }
@@ -57,15 +47,13 @@
         .popup-table td { padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
         .popup-table td.label-td { font-weight: bold; color: #555; width: 40%; }
         .popup-table td.value-td { color: #000; text-align: right; }
-        .popup-chart-container { height: 130px; margin-top: 5px; position: relative; }
+        .popup-chart-container { height: 180px; margin-top: 5px; position: relative; }
 
-        /* 地圖左側中間精準搜尋定位面板樣式 */
-        #search-container { position: absolute; top: 50%; left: 20px; transform: translateY(-50%); background: white; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 99; width: 160px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #eee; }
-        .search-title { font-size: 12px; font-weight: bold; color: #2c3e50; text-align: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; margin-bottom: 2px; }
-        .search-input { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; text-align: center; font-family: inherit; }
-        .search-btn-go { width: 100%; padding: 7px; background: #005e95; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
+        .search-title { font-size: 13px; font-weight: bold; color: #2c3e50; text-align: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; margin-bottom: 8px; }
+        .search-input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; text-align: center; font-family: inherit; margin-bottom: 6px; }
+        .search-btn-go { width: 100%; box-sizing: border-box; padding: 8px; background: #005e95; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; margin-top: 4px; }
         .search-btn-go:hover { background: #004b77; }
-        .search-btn-cancel { width: 100%; padding: 5px; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; transition: background 0.2s; text-align: center; }
+        .search-btn-cancel { width: 100%; box-sizing: border-box; padding: 6px; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; transition: background 0.2s; text-align: center; margin-top: 5px; }
         .search-btn-cancel:hover { background: #c0392b; }
     </style>
 </head>
@@ -76,11 +64,11 @@
         <div class="content-padding">
             <div class="static-count-box">
                 綠島鄉建物總數：3340 棟<br>
-                <span style="font-size: 11px; font-weight: normal;">(公有：1014 | 私原：2326)</span>
+                <span style="font-size: 11px; font-weight: normal;">(公有：1014 | 私有：2326)</span>
             </div>
             
             <div class="chart-box">
-                <div class="chart-title">情境發電總量對比 (MWh)</div>
+                <div class="chart-title">情境發電總量對比</div>
                 <div class="chart-container"><canvas id="resBar"></canvas></div>
             </div>
             <div class="chart-box">
@@ -88,7 +76,7 @@
                 <div class="chart-container"><canvas id="resLine"></canvas></div>
             </div>
             <div class="chart-box">
-                <div class="chart-title">能源組成細節 (kWh)</div>
+                <div class="chart-title">能源組成細節</div>
                 <div class="chart-container"><canvas id="resStack"></canvas></div>
             </div>
         </div>
@@ -105,11 +93,32 @@
             <button class="scenario-btn" data-name="情境六">情境六</button>
         </div>
 
-        <div id="search-container">
-            <div class="search-title">🏠 房屋編號定位</div>
-            <input type="text" id="search-building-input" class="search-input" placeholder="請輸入編號...">
-            <button id="btn-search-go" class="search-btn-go">查詢定位</button>
-            <button id="btn-search-cancel" class="search-btn-cancel">取消搜尋</button>
+        <div id="search-widget-container" style="position: absolute; top: 40%; left: 20px; transform: translateY(-50%); z-index: 99; display: flex; flex-direction: column; align-items: flex-start;">
+            <button id="search-logo-btn" title="定位服務" style="background: white; border: 1px solid #ccc; border-radius: 50%; width: 46px; height: 46px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; transition: background 0.2s;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#005e95" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            
+            <div id="search-menu-area" style="display: none; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-top: 10px; width: 170px; box-sizing: border-box; border: 1px solid #eee;">
+                <button id="btn-menu-address" class="mode-btn" style="margin-bottom: 8px; background: #f0f7ff; color: #005e95; border-color: #005e95;">📍 地址門牌定位</button>
+                <button id="btn-menu-building" class="mode-btn" style="margin-bottom: 0; background: #fff3e0; color: #d35400; border-color: #e67e22;">🏠 房屋編號定位</button>
+            </div>
+
+            <div id="search-input-area" style="display: none; background: white; padding: 14px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-top: 10px; width: 190px; box-sizing: border-box; border: 1px solid #eee;">
+                <div class="search-title" id="search-panel-title">搜尋服務</div>
+                
+                <div id="search-building-box" style="display: none;">
+                    <input type="text" id="search-building-input" class="search-input" placeholder="請輸入編號...">
+                </div>
+
+                <div id="search-address-box" style="display: none; flex-direction: column;">
+                    <select id="sel-village" class="search-input"><option value="">讀取中...</option></select>
+                    <select id="sel-neighborhood" class="search-input"><option value="">選擇鄰</option></select>
+                    <select id="sel-number" class="search-input"><option value="">選擇號</option></select>
+                </div>
+
+                <button id="btn-search-go" class="search-btn-go">執行定位</button>
+                <button id="btn-search-cancel" class="search-btn-cancel">取消 / 關閉</button>
+            </div>
         </div>
 
         <div id="building-popup-panel">
@@ -124,8 +133,8 @@
                     <tr><td class="label-td">觀光旅宿</td><td class="value-td" id="pop-is-hotel">--</td></tr>
                     <tr><td class="label-td">現在情境</td><td class="value-td" id="pop-scenario">--</td></tr>
                 </table>
-                <div style="font-weight: bold; color:#333; font-size:12px; border-top:1px solid #ddd; padding-top:6px; margin-top:5px; text-align:center;">逐月模擬發電量趨勢</div>
-                <div class="popup-chart-container">
+                <div id="mini-chart-title" style="font-weight: bold; color:#333; font-size:12px; border-top:1px solid #ddd; padding-top:6px; margin-top:5px; text-align:center;">逐月模擬發電量趨勢</div>
+                <div id="mini-chart-container" class="popup-chart-container">
                     <canvas id="buildingMiniChart"></canvas>
                 </div>
             </div>
@@ -134,23 +143,49 @@
 
     <div id="right-wrapper">
         <div id="right-panel-top">
-            <div class="header">情境模擬詳情</div>
-            <div class="content-padding">
-                <h3 id="scenario-display-name">載入中...</h3>
-                <div id="scenario-text-desc" class="scenario-text-desc">讀取情境說明...</div>
-                
-                <div class="results-grid">
-                    <div class="result-card"><div class="result-label">能源自給率</div><div class="result-value" id="res-rate">-- %</div></div>
-                    <div class="result-card"><div class="result-label">低於100%天數</div><div class="result-value" id="res-avg">-- 天</div></div>
-                    <div class="result-card"><div class="result-label">減碳量 (噸)</div><div class="result-value" id="res-cover">--</div></div>
-                    <div class="result-card"><div class="result-label">儲能需求(處)</div><div class="result-value" id="res-total">--</div></div>
-                    <div class="result-card"><div class="result-label">備轉容量率</div><div class="result-value" id="res-reserve">-- %</div></div>
-                    <div class="result-card"><div class="result-label">低於6%天數</div><div class="result-value" id="res-lowdays">-- 天</div></div>
-                </div>
+            <div id="scenario-mode-content">
+                <div class="header">情境模擬詳情</div>
+                <div class="content-padding">
+                    <h3 id="scenario-display-name">載入中...</h3>
+                    <div id="scenario-text-desc" class="scenario-text-desc">讀取情境說明...</div>
+                    
+                    <div class="results-grid">
+                        <div class="result-card"><div class="result-label">能源自給率</div><div class="result-value" id="res-rate">-- %</div></div>
+                        <div class="result-card"><div class="result-label">低於100%天數</div><div class="result-value" id="res-avg">-- 天</div></div>
+                        <div class="result-card"><div class="result-label">減碳量 (噸)</div><div class="result-value" id="res-cover">--</div></div>
+                        <div class="result-card"><div class="result-label">儲能需求(處)</div><div class="result-value" id="res-total">--</div></div>
+                        <div class="result-card"><div class="result-label">備轉容量率</div><div class="result-value" id="res-reserve">-- %</div></div>
+                        <div class="result-card"><div class="result-label">低於6%天數</div><div class="result-value" id="res-lowdays">-- 天</div></div>
+                    </div>
 
-                <div class="chart-box">
-                    <div class="chart-title">每月發電與用電趨勢</div>
-                    <div class="chart-container" style="height: 220px;"><canvas id="energyMixChart"></canvas></div>
+                    <div class="chart-box">
+                        <div class="chart-title">每月發電與用電趨勢</div>
+                        <div class="chart-container" style="height: 220px;"><canvas id="energyMixChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="land-mode-content" style="display: none;">
+                <div class="header" style="background: #8e44ad;">公私有地動態視域分析</div>
+                <div class="content-padding">
+                    <div class="scenario-text-desc" style="border-left-color: #8e44ad;">分析引擎將隨您的地圖視角移動，即時計算「當前畫面中」的公私有土地面積、建物分佈與發電潛能。</div>
+                    
+                    <div class="results-grid">
+                        <div class="result-card"><div class="result-label">視域內公有建物</div><div class="result-value" id="land-pub-bldg" style="color: #005e95;">-- 棟</div></div>
+                        <div class="result-card"><div class="result-label">視域內私有建物</div><div class="result-value" id="land-pri-bldg" style="color: #ff9f40;">-- 棟</div></div>
+                        <div class="result-card"><div class="result-label">預估公有地面積</div><div class="result-value" id="land-pub-area" style="color: #005e95;">-- m²</div></div>
+                        <div class="result-card"><div class="result-label">預估私有地面積</div><div class="result-value" id="land-pri-area" style="color: #ff9f40;">-- m²</div></div>
+                    </div>
+
+                    <div class="chart-box" style="margin-bottom: 5px; padding: 5px;">
+                        <div class="chart-title" style="margin-bottom: 2px;">視域內建物權屬佔比</div>
+                        <div class="chart-container" style="height: 140px;"><canvas id="landPieChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-box" style="margin-bottom: 5px; padding: 5px;">
+                        <div class="chart-title" style="margin-bottom: 2px;">視域內潛在發電量分佈</div>
+                        <div class="chart-container" style="height: 140px;"><canvas id="landEnergyPieChart"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -169,39 +204,29 @@
     <script src="https://js.arcgis.com/4.28/"></script>
 
     <script>
-        // 核心修改：引入 FeatureLayer 模組以供背景精準查詢 REST API
         require([
             "esri/identity/IdentityManager", "esri/WebScene", "esri/views/SceneView",
-            "esri/core/reactiveUtils", "esri/layers/FeatureLayer"
-        ], function(esriId, WebScene, SceneView, reactiveUtils, FeatureLayer) {
+            "esri/core/reactiveUtils", "esri/layers/FeatureLayer", "esri/geometry/geometryEngine"
+        ], function(esriId, WebScene, SceneView, reactiveUtils, FeatureLayer, geometryEngine) {
 
             const portalUrl = "https://igisportal.geomatics.ncku.edu.tw/portal";
             let view, barChart, resBar, resLine, resStack, buildingMiniChart;
+            let landPieChart, landEnergyPieChart;
             let currentBuildingLayerName = "情境一";
-            
             let currentSystemMode = 'compare'; 
             let highlightHandle = null; 
+            let geoStatHandler = null;
 
-            // 原始 3D WebScene ID 資料庫
             const mapLibraryCompare = {
-                "情境一": "90f58d1483704da0b21edb1e127c2b18",
-                "情境二": "748b1770860d4e66bcbd785c779cb372",
-                "情境三": "2819b3ded37747f696ffbb4e9fe249bc",
-                "情境四": "e0da62dcbbf848efb3e17ce71003f00d",
-                "情境五": "eb4eae80e7534e99ac4c74bc6993dff5",
-                "情境六": "909a0a541d034687ba025513809b0dd9"
+                "情境一": "90f58d1483704da0b21edb1e127c2b18", "情境二": "748b1770860d4e66bcbd785c779cb372", "情境三": "2819b3ded37747f696ffbb4e9fe249bc",
+                "情境四": "e0da62dcbbf848efb3e17ce71003f00d", "情境五": "eb4eae80e7534e99ac4c74bc6993dff5", "情境六": "909a0a541d034687ba025513809b0dd9"
             };
 
             const mapLibraryRender = {
-                "情境一": "4a044febc72144f8bb50ae340d3956a7",
-                "情境二": "ae44d048583d4993bce3bf20a16339d2",
-                "情境三": "ea1c3bf1f3e1425caa3db68339e3087e",
-                "情境四": "c59eec08f4e440468124c89ed3815829",
-                "情境五": "7cf0a861f2134838914e5e6c14b05095",
-                "情境六": "173d15522004411589c4dabe31035ba5"
+                "情境一": "4a044febc72144f8bb50ae340d3956a7", "情境二": "ae44d048583d4993bce3bf20a16339d2", "情境三": "ea1c3bf1f3e1425caa3db68339e3087e",
+                "情境四": "c59eec08f4e440468124c89ed3815829", "情境五": "7cf0a861f2134838914e5e6c14b05095", "情境六": "173d15522004411589c4dabe31035ba5"
             };
 
-            // 終極修復核心：您提供的真實後台 REST API URLs (Wide 與 Long)
             const backendRestUrls = {
                 "compare": {
                     "情境一": "https://igisportal.geomatics.ncku.edu.tw/server/rest/services/Hosted/%E6%83%85%E5%A2%83%E4%B8%80wide/FeatureServer/0",
@@ -220,6 +245,9 @@
                     "情境六": "https://igisportal.geomatics.ncku.edu.tw/server/rest/services/Hosted/%E6%83%85%E5%A2%83%E5%85%ADlong/FeatureServer/0"
                 }
             };
+
+            const addressLayerUrl = "https://igisportal.geomatics.ncku.edu.tw/server/rest/services/Hosted/%E7%B6%A0%E5%B3%B6%E9%84%89%E9%96%80%E7%89%8C%E5%BA%A7%E6%A8%99/FeatureServer/0";
+            const addressLayer = new FeatureLayer({ url: addressLayerUrl });
 
             const scenarios = [
                 { name: "情境一", full: "屋頂型光電", solar: 40564163.72, wind: 0, geo: 0, rate: 220.4, days: 69, co2: 19227.4136, store: 7, total: 40.56416372, reserveRate: 128.4503, lowDays: 73 },
@@ -243,13 +271,13 @@
                 resBar = new Chart(document.getElementById('resBar'), {
                     type: 'bar',
                     data: { labels: ['情境一', '情境二', '情境三', '情境四', '情境五', '情境六'], datasets: [{ label: '發電(MWh)', data: scenarios.map(s=>s.total), backgroundColor: '#27ae60' }] },
-                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ scaleLabel: { display: true, labelString: '單位: MWh', fontSize: 10 }, ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
                 });
 
                 resLine = new Chart(document.getElementById('resLine'), {
                     type: 'line',
                     data: { labels: ['情境一', '情境二', '情境三', '情境四', '情境五', '情境六'], datasets: [{ label: '自給率%', data: scenarios.map(s=>s.rate), borderColor: '#c0392b', fill: false, tension: 0.3 }] },
-                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ scaleLabel: { display: true, labelString: '單位: %', fontSize: 10 }, ticks: { fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
                 });
 
                 resStack = new Chart(document.getElementById('resStack'), {
@@ -259,58 +287,190 @@
                         { label: '風能', data: scenarios.map(s=>s.wind/1000000), backgroundColor: '#95a5a6' },
                         { label: '地熱', data: scenarios.map(s=>s.geo/1000000), backgroundColor: '#e67e22' }
                     ]},
-                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 8, fontSize: 9 } }, scales: { xAxes: [{ stacked: true, ticks: { fontSize: 9 } }], yAxes: [{ stacked: true, ticks: { fontSize: 9 } }] } }
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 8, fontSize: 9 } }, scales: { xAxes: [{ stacked: true, ticks: { fontSize: 9 } }], yAxes: [{ stacked: true, scaleLabel: { display: true, labelString: '單位: MWh', fontSize: 10 }, ticks: { fontSize: 9 } }] } }
                 });
             }
 
             function initDynamicCharts() {
-                const ctxBar = document.getElementById('energyMixChart').getContext('2d');
-                barChart = new Chart(ctxBar, {
+                barChart = new Chart(document.getElementById('energyMixChart').getContext('2d'), {
                     type: 'bar',
                     data: { labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'], datasets: [
                         { label: '發電', type: 'bar', data: [], backgroundColor: [] }, 
                         { label: '用電', type: 'line', data: [], borderColor: '#ff9f40', fill: false, tension: 0.1 }
                     ]},
-                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 10, fontSize: 10 } }, scales: { yAxes: [{ ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom', labels: { boxWidth: 10, fontSize: 10 } }, scales: { yAxes: [{ scaleLabel: { display: true, labelString: '單位: kWh', fontSize: 10 }, ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
+                });
+
+                landPieChart = new Chart(document.getElementById('landPieChart').getContext('2d'), {
+                    type: 'pie',
+                    data: { labels: ['公有建物', '私有建物'], datasets: [{ data: [0, 0], backgroundColor: ['#005e95', '#ff9f40'], borderWidth: 1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'right', labels: { boxWidth: 10, fontSize: 11 } } }
+                });
+
+                landEnergyPieChart = new Chart(document.getElementById('landEnergyPieChart').getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: ['光電', '風電', '地熱'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#f1c40f', '#95a5a6', '#e67e22'], borderWidth: 1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { position: 'right', labels: { boxWidth: 10, fontSize: 11 } } }
                 });
             }
 
             function initBuildingMiniChart() {
-                const ctxMini = document.getElementById('buildingMiniChart').getContext('2d');
                 if (buildingMiniChart) buildingMiniChart.destroy();
-                buildingMiniChart = new Chart(ctxMini, {
+                buildingMiniChart = new Chart(document.getElementById('buildingMiniChart').getContext('2d'), {
                     type: 'bar',
-                    data: {
-                        labels: ['1','2','3','4','5','6','7','8','9','10','11','12'],
-                        datasets: [{ label: '發電量', data: new Array(12).fill(0), backgroundColor: '#e67e22' }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        legend: { display: false },
-                        scales: {
-                            yAxes: [{ ticks: { beginAtZero: true, fontSize: 8 } }],
-                            xAxes: [{ ticks: { fontSize: 9 } }]
-                        }
-                    }
+                    data: { labels: ['1','2','3','4','5','6','7','8','9','10','11','12'], datasets: [{ label: '發電量', data: new Array(12).fill(0), backgroundColor: '#e67e22' }] },
+                    options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ scaleLabel: { display: true, labelString: '單位: kWh', fontSize: 9 }, ticks: { beginAtZero: true, fontSize: 9 } }], xAxes: [{ ticks: { fontSize: 9 } }] } }
                 });
             }
 
             function hideBuildingPopup() {
                 document.getElementById("building-popup-panel").style.display = "none";
-                if (highlightHandle) {
-                    highlightHandle.remove();
-                    highlightHandle = null;
+                if (highlightHandle) { highlightHandle.remove(); highlightHandle = null; }
+            }
+
+            function applyOutFieldsToAllLayers() {
+                if (!view || !view.map) return;
+                view.map.allLayers.forEach(layer => {
+                    if (layer.type === "feature" || layer.type === "scene") layer.outFields = ["*"];
+                });
+            }
+
+            function setupGeoDistinctStatistics() {
+                if(geoStatHandler) geoStatHandler.remove();
+                geoStatHandler = reactiveUtils.watch(() => view.stationary, (stationary) => {
+                    if (stationary && currentSystemMode === 'land') runGeoDistinctStatistics();
+                });
+            }
+
+            // 【修正2】使用分層遞迴的批次抓取，完全突破伺服器 2000 筆上限
+            async function fetchAllFeatures(layer, query) {
+                let features = [];
+                try {
+                    if (layer.type === "scene") {
+                        // 針對 SceneLayer 使用 OIDs 批次查詢
+                        const idQuery = query.clone();
+                        idQuery.returnGeometry = false;
+                        idQuery.outFields = [layer.objectIdField || "OBJECTID"];
+                        const objectIds = await layer.queryObjectIds(idQuery);
+                        
+                        if (!objectIds || objectIds.length === 0) return [];
+                        const batchSize = 1000;
+                        for (let i = 0; i < objectIds.length; i += batchSize) {
+                            const batchQuery = layer.createQuery();
+                            batchQuery.objectIds = objectIds.slice(i, i + batchSize);
+                            batchQuery.returnGeometry = query.returnGeometry;
+                            batchQuery.outFields = query.outFields;
+                            if(query.outSpatialReference) batchQuery.outSpatialReference = query.outSpatialReference;
+                            
+                            let res = await layer.queryFeatures(batchQuery);
+                            if(res.features) features.push(...res.features);
+                        }
+                    } else {
+                        // 針對 FeatureLayer 使用 start/num 原生分頁機制
+                        let start = 0, num = 2000;
+                        while(true) {
+                            query.start = start;
+                            query.num = num;
+                            let res = await layer.queryFeatures(query);
+                            if(res.features) features.push(...res.features);
+                            if(!res.exceededTransferLimit || res.features.length < num) break;
+                            start += num;
+                        }
+                    }
+                } catch(e) {
+                    console.warn("批次查詢失敗，退回基本查詢模式", e);
+                    let res = await layer.queryFeatures(query);
+                    if(res.features) features.push(...res.features);
                 }
+                return features;
+            }
+
+            async function runGeoDistinctStatistics() {
+                if(currentSystemMode !== 'land') return;
+                
+                // 【修正1】尋找圖層邏輯改為排除法，確保所有情境皆能抓取
+                let buildLayer = view.map.allLayers.find(l => 
+                    (l.type === "feature" || l.type === "scene") && 
+                    l.title && 
+                    !l.title.includes("公有") && 
+                    !l.title.includes("門牌")
+                );
+                let publicLayer = view.map.allLayers.find(l => l.title && l.title.includes("公有"));
+                if(!buildLayer) return;
+
+                try {
+                    const bQ = buildLayer.createQuery();
+                    bQ.geometry = view.extent;
+                    bQ.returnGeometry = true;
+                    bQ.outFields = ["*"];
+                    // 【修正2】強制兩者空間參考系相同，確保空間交疊不會誤差
+                    bQ.outSpatialReference = view.spatialReference; 
+                    const bFeats = await fetchAllFeatures(buildLayer, bQ);
+                    
+                    let pubBldg = 0, priBldg = 0, pubArea = 0, priArea = 0;
+                    let pubGeoms = [];
+                    
+                    if(publicLayer) {
+                        const pQ = publicLayer.createQuery();
+                        pQ.geometry = view.extent;
+                        pQ.returnGeometry = true;
+                        pQ.outSpatialReference = view.spatialReference;
+                        const pFeats = await fetchAllFeatures(publicLayer, pQ);
+                        pubGeoms = pFeats.map(f => f.geometry).filter(g=>g);
+                        pubGeoms.forEach(g => {
+                            let inter = geometryEngine.intersect(g, view.extent);
+                            if(inter) pubArea += geometryEngine.planarArea(inter, "square-meters");
+                        });
+                    }
+                    
+                    bFeats.forEach(f => {
+                        let isPub = false;
+                        if (f.geometry) {
+                            // 使用原生的多邊形交集檢查，這樣最精準
+                            isPub = pubGeoms.some(pg => geometryEngine.intersects(pg, f.geometry));
+                        }
+                        if(isPub) pubBldg++; else priBldg++;
+                        
+                        if(f.geometry && f.geometry.type === "polygon") {
+                            let area = geometryEngine.planarArea(f.geometry, "square-meters");
+                            if(!isPub) priArea += area; 
+                        }
+                    });
+
+                    const longUrl = backendRestUrls['render'][currentBuildingLayerName];
+                    const lLayer = new FeatureLayer({ url: longUrl });
+                    const lQ = lLayer.createQuery();
+                    lQ.geometry = view.extent;
+                    lQ.returnGeometry = false;
+                    lQ.outFields = ["energy_typ", "supply_kwh"]; 
+                    
+                    const lFeats = await fetchAllFeatures(lLayer, lQ);
+                    let solarGen = 0, windGen = 0, geoGen = 0;
+
+                    lFeats.forEach(f => {
+                        let eTyp = f.attributes.energy_typ;
+                        let kwh = parseFloat(f.attributes.supply_kwh ?? 0);
+                        if(eTyp === "roof_solar") solarGen += kwh;
+                        else if(eTyp === "roof_wind") windGen += kwh;
+                        else if(eTyp === "geo" || eTyp === "geothermal") geoGen += kwh;
+                    });
+                    
+                    document.getElementById("land-pub-bldg").innerText = pubBldg + " 棟";
+                    document.getElementById("land-pri-bldg").innerText = priBldg + " 棟";
+                    document.getElementById("land-pub-area").innerText = pubArea > 0 ? pubArea.toFixed(0) + " m²" : "-- m²";
+                    document.getElementById("land-pri-area").innerText = priArea > 0 ? priArea.toFixed(0) + " m²" : "-- m²";
+                    
+                    if(landPieChart) { landPieChart.data.datasets[0].data = [pubBldg, priBldg]; landPieChart.update(); }
+                    if(landEnergyPieChart) { landEnergyPieChart.data.datasets[0].data = [solarGen/1000, windGen/1000, geoGen/1000]; landEnergyPieChart.update(); }
+                } catch(e) { console.log(e); }
             }
 
             async function switchScenario(name) {
                 currentBuildingLayerName = name;
                 document.getElementById("scenario-display-name").innerText = name;
-                
                 hideBuildingPopup();
                 
-                let sceneId = (currentSystemMode === 'compare') ? mapLibraryCompare[name] : mapLibraryRender[name];
+                let sceneId = (currentSystemMode === 'render') ? mapLibraryRender[name] : mapLibraryCompare[name];
                 
                 try {
                     await esriId.getCredential(portalUrl + "/sharing");
@@ -320,14 +480,8 @@
                         view = new SceneView({ 
                             container: "viewDiv", 
                             map: scene, 
-                            popup: { autoOpenEnabled: false },
-                            
-                            // 💡 加上這段 highlightOptions 來客製化高亮顏色！
-                            highlightOptions: {
-                                color: [183, 102, 174, 1], // [R, G, B, 透明度]，這裡用淺紫色
-                                haloOpacity: 0.9,        // 外框光暈的透明度 (0~1)
-                                fillOpacity: 0.5         // 內部填色的透明度 (0~1)
-                            }
+                            popup: { autoOpenEnabled: false }, 
+                            highlightOptions: { color: [255, 0, 0, 1], haloOpacity: 0.9, fillOpacity: 0.5 } 
                         });
                         await view.when();
                         initStaticCharts();
@@ -335,12 +489,13 @@
                         initBuildingMiniChart();
                         setupBuildingClickEvent();
                         setupSearchFunctionality(); 
-                    } else { 
-                        view.map = scene; 
-                    }
+                    } else { view.map = scene; }
+
+                    applyOutFieldsToAllLayers();
+                    reactiveUtils.when(() => view.map.allLayers.length > 0, function() { applyOutFieldsToAllLayers(); });
 
                     updateScenarioUI();
-                    
+                    if(currentSystemMode === 'land') runGeoDistinctStatistics();
                 } catch (e) { console.error(e); }
             }
 
@@ -358,54 +513,35 @@
                     const data = scenarioPowerData[currentBuildingLayerName];
                     barChart.data.datasets[0].data = data.generation;
                     barChart.data.datasets[1].data = data.demand;
-
-                    let bgColors = [];
-                    for(let i=0; i<12; i++){
-                        if(data.demand[i] > data.generation[i]) {
-                            bgColors.push('#e74c3c'); 
-                        } else {
-                            bgColors.push('rgba(0, 94, 149, 0.7)'); 
-                        }
-                    }
-                    barChart.data.datasets[0].backgroundColor = bgColors;
+                    barChart.data.datasets[0].backgroundColor = data.demand.map((d,i) => d > data.generation[i] ? '#e74c3c' : 'rgba(0, 94, 149, 0.7)');
                     barChart.update();
                 }
             }
-
-            // --- 核心更新區：完美呈現後台資料 (REST API直連) ---
             
-            // 負責將獲取到的屬性繪製在畫面上
             function showDataInPopup(attributes) {
-                document.getElementById("pop-building-name").innerText = attributes.Name || attributes.name || "未命名";
+                document.getElementById("pop-building-name").innerText = attributes.name || "未命名";
                 
-                let eTyp = attributes.energytype || attributes.ENERGYTYPE || attributes.energy_typ || attributes.ENERGY_TYP;
+                let eTyp = attributes.energy_typ || attributes.energytype;
                 if (eTyp === "roof_solar") eTyp = "光電";
                 else if (eTyp === "roof_wind") eTyp = "風電";
-                else if (!eTyp || eTyp === "0" || eTyp === 0) eTyp = "不建議設置";
+                else eTyp = "不建議設置";
                 document.getElementById("pop-energy-typ").innerText = eTyp;
 
-                let isHotelText = "否";
-                let isHotelVal = attributes.IsHotel !== undefined ? attributes.IsHotel : attributes.ISHOTEL;
-                if (isHotelVal === 1 || isHotelVal === "1") isHotelText = "是";
-                document.getElementById("pop-is-hotel").innerText = isHotelText;
+                let isHotelVal = attributes.ishotel;
+                document.getElementById("pop-is-hotel").innerText = (isHotelVal == 1 || isHotelVal == "1") ? "是" : "否";
+                document.getElementById("pop-scenario").innerText = scenarios.find(item => item.name === currentBuildingLayerName).full;
 
-                const currentScenObj = scenarios.find(item => item.name === currentBuildingLayerName);
-                document.getElementById("pop-scenario").innerText = currentScenObj ? currentScenObj.full : currentBuildingLayerName;
-
+                document.getElementById("mini-chart-title").style.display = "block";
+                document.getElementById("mini-chart-container").style.display = "block";
+                
                 let monthlyGen = [];
                 for (let i = 1; i <= 12; i++) {
-                    let padMonth = i < 10 ? "0" + i : i;
-                    let fieldName = "sup" + padMonth;
-                    let fieldNameUpper = "SUP" + padMonth;
-                    let val = 0;
-                    if (attributes[fieldName] !== undefined) val = parseFloat(attributes[fieldName]);
-                    else if (attributes[fieldNameUpper] !== undefined) val = parseFloat(attributes[fieldNameUpper]);
-                    monthlyGen.push(val);
+                    let m = i < 10 ? "0" + i : i;
+                    monthlyGen.push(parseFloat(attributes["sup"+m] ?? 0));
                 }
-
-                if (buildingMiniChart) {
-                    buildingMiniChart.data.datasets[0].data = monthlyGen;
-                    buildingMiniChart.update();
+                if (buildingMiniChart) { 
+                    buildingMiniChart.data.datasets[0].data = monthlyGen; 
+                    buildingMiniChart.update(); 
                 }
 
                 document.getElementById("building-popup-panel").style.display = "flex";
@@ -414,144 +550,192 @@
             function setupBuildingClickEvent() {
                 view.on("click", function(event) {
                     view.hitTest(event).then(function(response) {
-                        const results = response.results.filter(function(result) {
-                            return result.type === "graphic" && result.graphic.layer;
+                        let result = response.results.find(r => r.graphic && r.graphic.layer);
+                        if (!result) return;
+                        
+                        const graphic = result.graphic;
+                        const bName = graphic.attributes.name; 
+                        
+                        view.whenLayerView(graphic.layer).then(lv => { 
+                            if (highlightHandle) highlightHandle.remove(); 
+                            let oidField = graphic.layer.objectIdField || "OBJECTID";
+                            let oid = graphic.attributes[oidField] || graphic.attributes.objectid || graphic.attributes.OBJECTID;
+                            highlightHandle = lv.highlight([oid]); 
                         });
 
-                        if (results.length > 0) {
-                            const graphic = results[0].graphic;
-                            const bName = graphic.attributes.Name || graphic.attributes.name;
-                            const bObjId = graphic.attributes.OBJECTID;
+                        const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
+                        const q = new FeatureLayer({ url: wideUrl }).createQuery();
+                        q.outFields = ["*"];
+                        q.where = bName ? `name = '${bName}'` : `objectid = ${graphic.attributes.objectid || graphic.attributes.OBJECTID}`;
 
-                            // 處理高亮
-                            view.whenLayerView(graphic.layer).then(function(layerView) {
-                                if (highlightHandle) highlightHandle.remove(); 
-                                highlightHandle = layerView.highlight(graphic); 
-                            }).catch(function(err){ console.log(err); });
-
-                            if (!bName && !bObjId) return;
-
-                            // 核心修復：不管前台圖層抽稀多嚴重，直接透過您的 REST URL 獲取最完整的屬性
-                            const targetUrl = backendRestUrls[currentSystemMode][currentBuildingLayerName];
-                            const backendLayer = new FeatureLayer({ url: targetUrl });
-                            const query = backendLayer.createQuery();
-                            query.outFields = ["*"];
-                            
-                            if (bName) {
-                                query.where = "Name = '" + bName + "' OR name = '" + bName + "'";
-                            } else {
-                                query.where = "OBJECTID = " + bObjId;
-                            }
-
-                            backendLayer.queryFeatures(query).then(function(result) {
-                                if (result.features && result.features.length > 0) {
-                                    // 成功從後台撈出完整發電與能源資料
-                                    showDataInPopup(result.features[0].attributes);
-                                } else {
-                                    // 若萬一後台無資料，退回使用前台圖層屬性
-                                    showDataInPopup(graphic.attributes);
-                                }
-                            }).catch(function(err) {
-                                console.error("REST 屬性查詢失敗:", err);
-                                showDataInPopup(graphic.attributes);
-                            });
-                        }
+                        new FeatureLayer({ url: wideUrl }).queryFeatures(q).then(res => {
+                            showDataInPopup(res.features.length > 0 ? res.features[0].attributes : graphic.attributes);
+                        }).catch(() => showDataInPopup(graphic.attributes));
                     });
                 });
-
                 document.getElementById("close-building-popup").addEventListener("click", hideBuildingPopup);
             }
 
             function setupSearchFunctionality() {
-                const searchGoBtn = document.getElementById("btn-search-go");
-                const searchCancelBtn = document.getElementById("btn-search-cancel");
-                const searchInput = document.getElementById("search-building-input");
+                const menuArea = document.getElementById("search-menu-area");
+                const inputArea = document.getElementById("search-input-area");
+                let searchType = 'building';
 
-                searchGoBtn.replaceWith(searchGoBtn.cloneNode(true));
-                searchCancelBtn.replaceWith(searchCancelBtn.cloneNode(true));
-                
-                const newGoBtn = document.getElementById("btn-search-go");
-                const newCancelBtn = document.getElementById("btn-search-cancel");
+                document.getElementById("search-logo-btn").onclick = () => {
+                    if(inputArea.style.display === "block") { inputArea.style.display = "none"; menuArea.style.display = "none"; }
+                    else menuArea.style.display = (menuArea.style.display === "none") ? "block" : "none";
+                };
 
-                newGoBtn.addEventListener("click", performSearch);
-                searchInput.addEventListener("keypress", function(e) {
-                    if (e.key === 'Enter') performSearch();
-                });
+                document.getElementById("btn-menu-address").onclick = () => {
+                    menuArea.style.display = "none"; inputArea.style.display = "block";
+                    document.getElementById("search-panel-title").innerText = "📍 地址門牌定位";
+                    document.getElementById("search-building-box").style.display = "none";
+                    document.getElementById("search-address-box").style.display = "flex";
+                    searchType = 'address';
+                    if(document.getElementById("sel-village").options.length <= 1) loadAddressVillages();
+                };
 
-                newCancelBtn.addEventListener("click", function() {
-                    searchInput.value = "";
+                document.getElementById("btn-menu-building").onclick = () => {
+                    menuArea.style.display = "none"; inputArea.style.display = "block";
+                    document.getElementById("search-panel-title").innerText = "🏠 房屋編號定位";
+                    document.getElementById("search-building-box").style.display = "block";
+                    document.getElementById("search-address-box").style.display = "none";
+                    searchType = 'building';
+                };
+
+                document.getElementById("btn-search-cancel").onclick = () => {
+                    document.getElementById("search-building-input").value = "";
+                    inputArea.style.display = "none";
                     hideBuildingPopup();
-                });
+                };
 
-                function performSearch() {
-                    const searchVal = searchInput.value.trim();
-                    if (!searchVal) {
-                        alert("請輸入房屋編號！");
-                        return;
-                    }
-
-                    // 1. 先從後台 REST API 確保 100% 找到建物座標與屬性
-                    const targetUrl = backendRestUrls[currentSystemMode][currentBuildingLayerName];
-                    const backendLayer = new FeatureLayer({ url: targetUrl });
-                    const query = backendLayer.createQuery();
-                    query.where = "Name = '" + searchVal + "' OR name = '" + searchVal + "'";
-                    query.returnGeometry = true;
-                    query.outFields = ["*"];
-                    query.outSpatialReference = view.spatialReference; 
-
-                    backendLayer.queryFeatures(query).then(function(result) {
-                        if (result.features && result.features.length > 0) {
-                            const targetFeature = result.features[0];
-                            
-                            // 您的客製化：Zoom 縮放比例 20
-                            view.goTo({
-                                target: targetFeature.geometry,
-                                zoom: 20, 
-                                tilt: 45,
-                                heading: 30
-                            }, { duration: 1500, easing: "ease-in-out" }).then(function() {
-                                
-                                showDataInPopup(targetFeature.attributes);
-
-                                // 🔑 關鍵修復：不再盲目 find()，精準比對當前「情境名稱」來找出正確的 3D 建物圖層上色
-                                let foundFeatureLayer = null;
-                                view.map.allLayers.forEach(layer => {
-                                    if ((layer.type === "feature" || layer.type === "scene") && layer.title !== "公有土地地籍圖") {
-                                        if (layer.title && layer.title.includes(currentBuildingLayerName)) {
-                                            foundFeatureLayer = layer;
-                                        }
-                                    }
-                                });
-
-                                // 如果名稱沒對上，才退回抓第一個合法建物圖層
-                                if (!foundFeatureLayer) {
-                                    foundFeatureLayer = view.map.allLayers.find(layer => 
-                                        (layer.type === "feature" || layer.type === "scene") && layer.title !== "公有土地地籍圖"
-                                    );
-                                }
-
-                                // 對正確的圖層執行您設定的「淺紫色」高亮！
-                                if (foundFeatureLayer) {
-                                    view.whenLayerView(foundFeatureLayer).then(function(layerView) {
-                                        const sceneQuery = foundFeatureLayer.createQuery();
-                                        sceneQuery.where = "Name = '" + searchVal + "' OR name = '" + searchVal + "'";
-                                        foundFeatureLayer.queryFeatures(sceneQuery).then(sceneRes => {
-                                            if (sceneRes.features.length > 0) {
-                                                if (highlightHandle) highlightHandle.remove();
-                                                highlightHandle = layerView.highlight(sceneRes.features[0]);
-                                            }
-                                        });
-                                    });
-                                }
-                            });
-                        } else {
-                            alert("找不到房屋編號為 [" + searchVal + "] 的特定建物，請確認輸入是否正確！");
-                        }
-                    }).catch(function(err){
-                        console.error("搜尋查詢失敗:", err);
-                        alert("查詢發生錯誤，請稍後再試。");
+                function loadAddressVillages() {
+                    const q = addressLayer.createQuery(); q.where = "1=1"; q.returnDistinctValues = true; q.outFields = ["村里"];
+                    addressLayer.queryFeatures(q).then(res => {
+                        let opts = '<option value="">選擇村里</option>';
+                        res.features.forEach(f => { if(f.attributes["村里"]) opts += `<option value="${f.attributes["村里"]}">${f.attributes["村里"]}</option>`; });
+                        document.getElementById("sel-village").innerHTML = opts;
                     });
                 }
+
+                document.getElementById("sel-village").onchange = (e) => {
+                    if(!e.target.value) return;
+                    const q = addressLayer.createQuery(); q.where = `村里='${e.target.value}'`; q.returnDistinctValues = true; q.outFields = ["鄰"]; q.orderByFields = ["鄰 ASC"];
+                    addressLayer.queryFeatures(q).then(res => {
+                        let opts = '<option value="">選擇鄰</option>';
+                        res.features.forEach(f => { if(f.attributes["鄰"]) opts += `<option value="${f.attributes["鄰"]}">${f.attributes["鄰"]}</option>`; });
+                        document.getElementById("sel-neighborhood").innerHTML = opts;
+                        document.getElementById("sel-number").innerHTML = '<option value="">選擇號</option>';
+                    });
+                };
+
+                document.getElementById("sel-neighborhood").onchange = (e) => {
+                    const v = document.getElementById("sel-village").value;
+                    if(!e.target.value) return;
+                    const q = addressLayer.createQuery(); q.where = `村里='${v}' AND 鄰='${e.target.value}'`; q.returnDistinctValues = true; q.outFields = ["號"]; q.orderByFields = ["號 ASC"];
+                    addressLayer.queryFeatures(q).then(res => {
+                        let opts = '<option value="">選擇號</option>';
+                        res.features.forEach(f => { if(f.attributes["號"]) opts += `<option value="${f.attributes["號"]}">${f.attributes["號"]}</option>`; });
+                        document.getElementById("sel-number").innerHTML = opts;
+                    });
+                };
+
+                document.getElementById("btn-search-go").onclick = () => {
+                    const wideUrl = backendRestUrls['compare'][currentBuildingLayerName];
+
+                    // 【修正1】強制在任何模式都用排除法找到場景建物圖層，解決不同情境找不到圖層導致反白失效的問題
+                    let activeLayer = view.map.allLayers.find(l => 
+                        (l.type === "feature" || l.type === "scene") && 
+                        l.title && 
+                        !l.title.includes("公有") && 
+                        !l.title.includes("門牌")
+                    );
+
+                    if (searchType === 'building') {
+                        const val = document.getElementById("search-building-input").value.trim();
+                        if (!val) return alert("請輸入房屋編號！");
+                        
+                        if (activeLayer) {
+                            const query = activeLayer.createQuery();
+                            query.where = `name='${val}'`;
+                            query.returnGeometry = true;
+                            query.outFields = ["*"];
+                            
+                            activeLayer.queryFeatures(query).then(res => {
+                                if (res.features.length) {
+                                    const matchedBuilding = res.features[0];
+                                    view.goTo({ target: matchedBuilding.geometry, zoom: 20, tilt: 45, heading: 30 }, { duration: 1500 }).then(() => {
+                                        view.whenLayerView(activeLayer).then(lv => {
+                                            if (highlightHandle) highlightHandle.remove();
+                                            let oidField = activeLayer.objectIdField || "OBJECTID";
+                                            let oid = matchedBuilding.attributes[oidField] || matchedBuilding.attributes.objectid || matchedBuilding.attributes.OBJECTID;
+                                            highlightHandle = lv.highlight([oid]);
+                                            
+                                            const qWide = new FeatureLayer({ url: wideUrl }).createQuery();
+                                            qWide.where = `name='${val}'`;
+                                            qWide.outFields = ["*"];
+                                            new FeatureLayer({ url: wideUrl }).queryFeatures(qWide).then(wRes => {
+                                                showDataInPopup(wRes.features.length ? wRes.features[0].attributes : matchedBuilding.attributes);
+                                            }).catch(() => showDataInPopup(matchedBuilding.attributes));
+                                        });
+                                    });
+                                } else alert("找不到該房屋編號！");
+                            });
+                        }
+                    } else {
+                        const v = document.getElementById("sel-village").value, n = document.getElementById("sel-neighborhood").value, h = document.getElementById("sel-number").value;
+                        if(!v || !n || !h) return alert("請完整選擇地址！");
+                        
+                        addressLayer.queryFeatures({ where: `村里='${v}' AND 鄰='${n}' AND 號='${h}'`, returnGeometry: true, outFields: ["橫座標", "縱座標"] }).then(res => {
+                            if(res.features.length) {
+                                let feat = res.features[0];
+                                let geom = feat.geometry;
+                                if(!geom && feat.attributes["橫座標"]) geom = { type: "point", x: parseFloat(feat.attributes["橫座標"]), y: parseFloat(feat.attributes["縱座標"]), spatialReference: view.spatialReference };
+                                
+                                if(geom) {
+                                    view.goTo({ target: geom, zoom: 20, tilt: 45, heading: 30 }, { duration: 1500 }).then(() => {
+                                        
+                                        if (activeLayer) {
+                                            view.whenLayerView(activeLayer).then(function(layerView) {
+                                                const spatialQuery = activeLayer.createQuery();
+                                                spatialQuery.geometry = geom;
+                                                spatialQuery.distance = 15;
+                                                spatialQuery.units = "meters";
+                                                spatialQuery.returnGeometry = true;
+                                                spatialQuery.outFields = ["*"];
+
+                                                activeLayer.queryFeatures(spatialQuery).then(bRes => {
+                                                    if (bRes.features.length > 0) {
+                                                        const matchedBuilding = bRes.features[0];
+                                                        if (highlightHandle) highlightHandle.remove();
+                                                        
+                                                        let oidField = activeLayer.objectIdField || "OBJECTID";
+                                                        let oid = matchedBuilding.attributes[oidField] || matchedBuilding.attributes.objectid || matchedBuilding.attributes.OBJECTID;
+                                                        highlightHandle = layerView.highlight([oid]);
+                                                        
+                                                        const bName = matchedBuilding.attributes.name;
+                                                        const objId = matchedBuilding.attributes.objectid || matchedBuilding.attributes.OBJECTID;
+                                                        
+                                                        const qWide = new FeatureLayer({ url: wideUrl }).createQuery();
+                                                        qWide.outFields = ["*"];
+                                                        qWide.where = bName ? `name='${bName}'` : `objectid=${objId} OR OBJECTID=${objId}`;
+                                                        
+                                                        new FeatureLayer({ url: wideUrl }).queryFeatures(qWide).then(wRes => {
+                                                            showDataInPopup(wRes.features.length ? wRes.features[0].attributes : matchedBuilding.attributes);
+                                                        }).catch(() => showDataInPopup(matchedBuilding.attributes));
+                                                        
+                                                    } else {
+                                                        alert("該地址周邊無對應建物資料！");
+                                                    }
+                                                });
+                                            });
+                                        }
+                                    });
+                                }
+                            } else alert("找不到該地址座標！");
+                        });
+                    }
+                };
             }
 
             document.querySelectorAll(".scenario-btn").forEach(btn => {
@@ -562,29 +746,33 @@
                 });
             });
 
-            document.getElementById("btn-mode-compare").addEventListener("click", (e) => {
-                setFunctionMode('compare', e.target);
+            document.querySelectorAll(".mode-btn").forEach(btn => {
+                btn.addEventListener("click", e => {
+                    if(e.target.id === 'btn-menu-address' || e.target.id === 'btn-menu-building') return;
+
+                    document.querySelectorAll("#right-panel-bottom .mode-btn").forEach(b => b.classList.remove("active"));
+                    e.target.classList.add("active");
+                    
+                    let mode = 'compare';
+                    if(e.target.id === 'btn-mode-render') mode = 'render';
+                    else if(e.target.id === 'btn-mode-land') mode = 'land';
+                    currentSystemMode = mode;
+
+                    hideBuildingPopup();
+                    
+                    if (mode === 'land') {
+                        document.getElementById("scenario-mode-content").style.display = "none";
+                        document.getElementById("land-mode-content").style.display = "block";
+                        setupGeoDistinctStatistics();
+                        switchScenario(currentBuildingLayerName); 
+                    } else {
+                        document.getElementById("scenario-mode-content").style.display = "block";
+                        document.getElementById("land-mode-content").style.display = "none";
+                        if (geoStatHandler) { geoStatHandler.remove(); geoStatHandler = null; }
+                        switchScenario(currentBuildingLayerName);
+                    }
+                });
             });
-
-            document.getElementById("btn-mode-render").addEventListener("click", (e) => {
-                setFunctionMode('render', e.target);
-            });
-
-            document.getElementById("btn-mode-land").addEventListener("click", (e) => {
-                setFunctionMode('land', e.target);
-            });
-
-            function setFunctionMode(mode, targetBtn) {
-                hideBuildingPopup();
-
-                document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
-                targetBtn.classList.add("active");
-                currentSystemMode = mode;
-                
-                if (mode === 'compare' || mode === 'render') {
-                    switchScenario(currentBuildingLayerName);
-                }
-            }
 
             switchScenario("情境一");
         });
